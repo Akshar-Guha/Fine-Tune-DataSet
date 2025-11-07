@@ -1,0 +1,100 @@
+http:
+  middlewares:
+    # Rate limiting
+    rate-limit:
+      rateLimit:
+        average: 100
+        burst: 50
+        period: 1m
+
+    # Authentication
+    auth-jwt:
+      forwardAuth:
+        address: "http://api:8000/auth/verify"
+        authResponseHeaders:
+          - "X-User-ID"
+          - "X-User-Role"
+
+    # Security headers
+    security-headers:
+      headers:
+        frameDeny: true
+        contentTypeNosniff: true
+        browserXssFilter: true
+        sslRedirect: true
+        stsSeconds: 31536000
+        stsIncludeSubdomains: true
+        stsPreload: true
+        customResponseHeaders:
+          X-Frame-Options: "DENY"
+          X-Content-Type-Options: "nosniff"
+          X-XSS-Protection: "1; mode=block"
+
+    # CORS
+    cors:
+      headers:
+        accessControlAllowMethods:
+          - GET
+          - POST
+          - PUT
+          - DELETE
+          - PATCH
+          - OPTIONS
+        accessControlAllowOriginList:
+          - "*"
+        accessControlMaxAge: 100
+        addVaryHeader: true
+
+    # Compression
+    compress:
+      compress: {}
+
+    # Retry
+    retry:
+      attempts: 3
+      initialInterval: 100ms
+
+  routers:
+    # API routes
+    api-router:
+      rule: "PathPrefix(`/api`)"
+      service: api-service
+      middlewares:
+        - rate-limit
+        - auth-jwt
+        - security-headers
+        - cors
+        - compress
+        - retry
+      entryPoints:
+        - web
+
+    # Inference routes (higher rate limit)
+    inference-router:
+      rule: "PathPrefix(`/v1`)"
+      service: inference-service
+      middlewares:
+        - security-headers
+        - cors
+        - compress
+      entryPoints:
+        - web
+
+  services:
+    api-service:
+      loadBalancer:
+        servers:
+          - url: "http://api:8000"
+        healthCheck:
+          path: /health
+          interval: 10s
+          timeout: 3s
+
+    inference-service:
+      loadBalancer:
+        servers:
+          - url: "http://inference:8080"
+        healthCheck:
+          path: /health
+          interval: 10s
+          timeout: 3s

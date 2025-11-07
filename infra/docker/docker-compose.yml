@@ -1,0 +1,53 @@
+version: '3.8'
+
+services:
+  # ============================================
+  # MLflow (Experiment Tracking - Local SQLite)
+  # ============================================
+  mlflow:
+    image: ghcr.io/mlflow/mlflow:v2.9.0
+    command: >
+      mlflow server 
+      --backend-store-uri sqlite:///mlflow/mlflow.db
+      --default-artifact-root file:///mlflow/artifacts
+      --host 0.0.0.0
+      --port 5000
+    ports:
+      - "5000:5000"
+    volumes:
+      - mlflow_data:/mlflow
+    networks:
+      - modelops
+
+
+
+  # ============================================
+  # API Server
+  # ============================================
+  api:
+    build:
+      context: ../../
+      dockerfile: infra/docker/Dockerfile.worker
+    command: uvicorn api.rest.main:app --host 0.0.0.0 --port 8000 --reload
+    ports:
+      - "8000:8000"
+    environment:
+      - MLFLOW_TRACKING_URI=http://mlflow:5000
+      - PREFECT_API_URL=http://localhost:4200/api
+    depends_on:
+      - mlflow
+    networks:
+      - modelops
+    volumes:
+      - ../..:/app
+      - model_data:/app/models
+      - dataset_data:/app/datasets
+
+networks:
+  modelops:
+    driver: bridge
+
+volumes:
+  mlflow_data:
+  model_data:
+  dataset_data:

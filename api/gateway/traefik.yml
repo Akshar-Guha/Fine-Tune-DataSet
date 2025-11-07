@@ -1,0 +1,57 @@
+api:
+  dashboard: true
+  insecure: true
+
+entryPoints:
+  web:
+    address: ":80"
+  websecure:
+    address: ":443"
+
+providers:
+  file:
+    filename: /etc/traefik/dynamic.yml
+    watch: true
+  docker:
+    exposedByDefault: false
+
+log:
+  level: INFO
+  format: json
+
+accessLog:
+  format: json
+  fields:
+    defaultMode: keep
+    headers:
+      defaultMode: keep
+
+# Metrics for Prometheus
+metrics:
+  prometheus:
+    addEntryPointsLabels: true
+    addServicesLabels: true
+    buckets:
+      - 0.1
+      - 0.3
+      - 1.0
+      - 3.0
+      - 5.0
+      - 10.0
+
+# Tracing
+tracing:
+  jaeger:
+    samplingServerURL: http://jaeger:5778/sampling
+    localAgentHostPort: jaeger:6831
+    gen128Bit: true
+    propagation: jaeger
+
+# Certificate resolver
+certificatesResolvers:
+  letsencrypt:
+    acme:
+      email: admin@modelops.local
+      storage: /letsencrypt/acme.json
+      httpChallenge:
+        entryPoint: web

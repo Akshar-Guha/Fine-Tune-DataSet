@@ -1,0 +1,11 @@
+{
+  "workflow": "qlora_training",
+  "config": {
+    "base_model": "lama 3.2 1b",
+    "dataset_id": "my_dataset",
+    "rank": 8,
+    "alpha": 16,
+    "epochs": 3,
+    "auto_quantize": true
+  }
+}

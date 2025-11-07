@@ -1,0 +1,90 @@
+[tool.poetry]
+name = "modelops"
+version = "1.0.0"
+description = "Production-Grade ModelOps Platform - 100% Free & Open Source"
+authors = ["Boss <boss@modelops.ai>"]
+license = "Apache-2.0"
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = ">=3.10,<3.12"
+# Web Framework
+fastapi = "^0.104.0"
+uvicorn = {extras = ["standard"], version = "^0.24.0"}
+pydantic = "^2.5.0"
+
+# ML Frameworks
+torch = "^2.1.0"
+transformers = "^4.36.0"
+peft = "^0.7.0"
+bitsandbytes = "^0.41.0"
+trl = "^0.7.0"
+
+# Inference (Laptop-friendly)
+llama-cpp-python = "^0.2.0"
+ollama = "^0.1.0"
+
+# Quantization (CPU-supported)
+autoawq = "^0.1.6"
+
+# Orchestration (Lightweight)
+prefect = "^2.14.0"
+
+# Storage (Embedded)
+duckdb = "^0.9.0"
+lancedb = "^0.4.0"
+
+# Vector & Embeddings
+sentence-transformers = "^2.2.0"
+fastembed = "^0.1.0"
+
+# Experiment Tracking (Local)
+mlflow = "^2.9.0"
+
+# Data Processing
+pandas = "^2.1.0"
+pyarrow = "^14.0.0"
+datasets = "^2.15.0"
+
+# Utilities
+python-dotenv = "^1.0.0"
+httpx = "^0.25.0"
+aiofiles = "^23.2.0"
+python-multipart = "^0.0.6"
+prometheus-client = "^0.19.0"
+
+# CLI
+click = "^8.1.0"
+rich = "^13.7.0"
+typer = "^0.9.0"
+
+[tool.poetry.dev-dependencies]
+pytest = "^7.4.0"
+pytest-asyncio = "^0.21.0"
+pytest-cov = "^4.1.0"
+black = "^23.11.0"
+ruff = "^0.1.6"
+mypy = "^1.7.0"
+ipython = "^8.18.0"
+jupyter = "^1.0.0"
+
+[tool.poetry.scripts]
+modelops = "cli.main:cli"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.black]
+line-length = 100
+target-version = ['py310']
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.mypy]
+python_version = "3.10"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = false
