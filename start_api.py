@@ -3,6 +3,13 @@ import os
 import sys
 from pathlib import Path
 
+# Load environment variables from .env file
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    pass  # dotenv not installed, continue without it
+
 # Ensure stdlib has priority over project packages (avoid 'platform' shadowing)
 project_root = Path(__file__).parent
 project_parent = project_root.parent

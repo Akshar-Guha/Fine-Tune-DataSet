@@ -1,0 +1,1 @@
+{"timestamp": "2025-11-07 23:11:58,085", "level": "INFO", "category": "security", "message": {"event_type": "login_success", "user_id": "test_user", "resource": null, "action": "login", "status": "success", "ip_address": "127.0.0.1", "timestamp": "2025-11-07T17:41:58.085777", "details": {}}}

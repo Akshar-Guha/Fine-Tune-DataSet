@@ -13,6 +13,7 @@ from .datasets import router as datasets_router
 from .jobs import router as jobs_router
 from .artifacts import router as artifacts_router
 from .inference import router as inference_router
+from .models_api import router as models_api_router
 
 
 @asynccontextmanager
@@ -69,6 +70,11 @@ app.include_router(
     inference_router,
     prefix="/api/v1/inference",
     tags=["inference"]
+)
+app.include_router(
+    models_api_router,
+    prefix="/api/v1/models",
+    tags=["models"]
 )
 
 

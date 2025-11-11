@@ -59,7 +59,7 @@ async def register_artifact(
         )
 
     try:
-        from modelops.artifacts.registry.manager import ArtifactRegistry
+        from artifacts.registry.manager import ArtifactRegistry
         registry = ArtifactRegistry()
         artifact_id = registry.register(manifest)
 
@@ -90,7 +90,7 @@ async def list_artifacts(
         )
 
     try:
-        from modelops.artifacts.registry.manager import ArtifactRegistry
+        from artifacts.registry.manager import ArtifactRegistry
         registry = ArtifactRegistry()
 
         # Search with filters

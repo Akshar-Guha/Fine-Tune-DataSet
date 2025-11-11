@@ -1,0 +1,8 @@
+{
+  "test_key": {
+    "type": "aes-256",
+    "created_at": "2025-11-07T17:41:53.902981",
+    "status": "active",
+    "file": "test_keys\\test_key.key"
+  }
+}

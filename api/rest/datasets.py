@@ -5,12 +5,12 @@ from datetime import datetime
 from fastapi import APIRouter, HTTPException, Depends, Query, status
 from pydantic import BaseModel
 
+from services.storage.dataset_manager import DatasetManager
+
 from api.auth.permissions import (
     get_current_user,
-    require_permissions,
     Permission
 )
- 
 
 
 router = APIRouter()
@@ -27,19 +27,27 @@ class DatasetCreate(BaseModel):
 
 class DatasetResponse(BaseModel):
     """Dataset response."""
+    id: str
     name: str
     description: Optional[str]
-    version: str
-    num_rows: int
-    num_columns: int
-    created_at: datetime
+    file_path: str
+    format: str
+    rows: int
+    columns: int
     size_bytes: int
+    schema: List[dict]
+    created_at: datetime
 
 
 class DatasetList(BaseModel):
     """List of datasets."""
     datasets: List[DatasetResponse]
     total: int
+
+
+def get_dataset_manager() -> DatasetManager:
+    """Provide DatasetManager instance."""
+    return DatasetManager()
 
 
 @router.post(
@@ -49,7 +57,8 @@ class DatasetList(BaseModel):
 )
 async def create_dataset(
     dataset: DatasetCreate,
-    current_user: dict = Depends(get_current_user)
+    current_user: dict = Depends(get_current_user),
+    manager: DatasetManager = Depends(get_dataset_manager)
 ):
     """Create a new dataset."""
     # Check permissions
@@ -60,20 +69,18 @@ async def create_dataset(
         )
 
     try:
-        from storage.delta_lake_client import DeltaLakeClient
-        delta_client = DeltaLakeClient()
-
-        # TODO: Implement actual dataset upload logic
-        # For now, return mock response
-        return DatasetResponse(
+        dataset_id = dataset.name
+        metadata = manager.add_dataset(
+            dataset_id=dataset_id,
             name=dataset.name,
-            description=dataset.description,
-            version="0",
-            num_rows=0,
-            num_columns=0,
-            created_at=datetime.utcnow(),
-            size_bytes=0
+            file_path=dataset.source_path,
+            description=dataset.description or "",
+            format="parquet" if dataset.source_path.endswith(".parquet") else (
+                "csv" if dataset.source_path.endswith(".csv") else "json"
+            )
         )
+
+        return DatasetResponse(**metadata)
 
     except Exception as e:
         raise HTTPException(
@@ -86,7 +93,8 @@ async def create_dataset(
 async def list_datasets(
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=1000),
-    current_user: dict = Depends(get_current_user)
+    current_user: dict = Depends(get_current_user),
+    manager: DatasetManager = Depends(get_dataset_manager)
 ):
     """List all datasets."""
     # Check permissions
@@ -97,8 +105,10 @@ async def list_datasets(
         )
 
     try:
-        # TODO: Implement actual dataset listing logic
-        return DatasetList(datasets=[], total=0)
+        datasets = manager.list_datasets()
+        sliced = datasets[skip: skip + limit]
+        items = [DatasetResponse(**record) for record in sliced]
+        return DatasetList(datasets=items, total=len(datasets))
 
     except Exception as e:
         raise HTTPException(
@@ -110,7 +120,8 @@ async def list_datasets(
 @router.get("/{dataset_name}", response_model=DatasetResponse)
 async def get_dataset(
     dataset_name: str,
-    current_user: dict = Depends(get_current_user)
+    current_user: dict = Depends(get_current_user),
+    manager: DatasetManager = Depends(get_dataset_manager)
 ):
     """Get dataset details."""
     # Check permissions
@@ -121,14 +132,14 @@ async def get_dataset(
         )
 
     try:
-        from storage.delta_lake_client import DeltaLakeClient
-        delta_client = DeltaLakeClient()
+        dataset = manager.get_dataset(dataset_name)
+        if not dataset:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Dataset {dataset_name} not found"
+            )
 
-        # TODO: Implement actual dataset retrieval logic
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Dataset {dataset_name} not found"
-        )
+        return DatasetResponse(**dataset)
 
     except HTTPException:
         raise
@@ -142,7 +153,8 @@ async def get_dataset(
 @router.delete("/{dataset_name}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_dataset(
     dataset_name: str,
-    current_user: dict = Depends(get_current_user)
+    current_user: dict = Depends(get_current_user),
+    manager: DatasetManager = Depends(get_dataset_manager)
 ):
     """Delete a dataset."""
     # Check permissions
@@ -153,9 +165,15 @@ async def delete_dataset(
         )
 
     try:
-        # TODO: Implement actual dataset deletion logic
-        pass
+        deleted = manager.delete_dataset(dataset_name)
+        if not deleted:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Dataset {dataset_name} not found"
+            )
 
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,

@@ -1,7 +1,6 @@
 """Dataset management using DuckDB for local storage."""
 import os
 from typing import Dict, Any, List, Optional
-from pathlib import Path
 
 import duckdb
 import pandas as pd
@@ -31,6 +30,9 @@ class DatasetManager:
                 file_path VARCHAR NOT NULL,
                 format VARCHAR NOT NULL,
                 rows INTEGER,
+                columns INTEGER,
+                size_bytes BIGINT,
+                schema JSON,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         """)
@@ -69,19 +71,48 @@ class DatasetManager:
             raise ValueError(f"Unsupported format: {format}")
 
         rows = len(df)
+        columns = len(df.columns) if hasattr(df, "columns") else 0
+        size_bytes = os.path.getsize(file_path)
+        schema = [
+            {"name": column, "dtype": str(dtype)}
+            for column, dtype in getattr(df, "dtypes", {}).items()
+        ] if hasattr(df, "dtypes") else []
 
         # Insert metadata
         self.conn.execute("""
-            INSERT INTO datasets (id, name, description, file_path, format, rows)
-            VALUES (?, ?, ?, ?, ?, ?)
-        """, [dataset_id, name, description, file_path, format, rows])
+            INSERT INTO datasets (
+                id,
+                name,
+                description,
+                file_path,
+                format,
+                rows,
+                columns,
+                size_bytes,
+                schema
+            )
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """, [
+            dataset_id,
+            name,
+            description,
+            file_path,
+            format,
+            rows,
+            columns,
+            size_bytes,
+            schema
+        ])
 
         return {
             "id": dataset_id,
             "name": name,
             "file_path": file_path,
             "format": format,
-            "rows": rows
+            "rows": rows,
+            "columns": columns,
+            "size_bytes": size_bytes,
+            "schema": schema
         }
 
     def get_dataset(self, dataset_id: str) -> Optional[Dict[str, Any]]:
@@ -93,11 +124,24 @@ class DatasetManager:
         Returns:
             Dataset metadata or None
         """
-        result = self.conn.execute("""
-            SELECT id, name, description, file_path, format, rows, created_at
+        result = self.conn.execute(
+            """
+            SELECT
+                id,
+                name,
+                description,
+                file_path,
+                format,
+                rows,
+                columns,
+                size_bytes,
+                schema,
+                created_at
             FROM datasets
             WHERE id = ?
-        """, [dataset_id]).fetchone()
+            """,
+            [dataset_id]
+        ).fetchone()
 
         if not result:
             return None
@@ -109,7 +153,10 @@ class DatasetManager:
             "file_path": result[3],
             "format": result[4],
             "rows": result[5],
-            "created_at": result[6]
+            "columns": result[6],
+            "size_bytes": result[7],
+            "schema": result[8],
+            "created_at": result[9]
         }
 
     def list_datasets(self) -> List[Dict[str, Any]]:
@@ -118,11 +165,23 @@ class DatasetManager:
         Returns:
             List of dataset metadata
         """
-        results = self.conn.execute("""
-            SELECT id, name, description, file_path, format, rows, created_at
+        results = self.conn.execute(
+            """
+            SELECT
+                id,
+                name,
+                description,
+                file_path,
+                format,
+                rows,
+                columns,
+                size_bytes,
+                schema,
+                created_at
             FROM datasets
             ORDER BY created_at DESC
-        """).fetchall()
+            """
+        ).fetchall()
 
         return [
             {
@@ -132,10 +191,28 @@ class DatasetManager:
                 "file_path": row[3],
                 "format": row[4],
                 "rows": row[5],
-                "created_at": row[6]
+                "columns": row[6],
+                "size_bytes": row[7],
+                "schema": row[8],
+                "created_at": row[9]
             }
             for row in results
         ]
+
+    def delete_dataset(self, dataset_id: str) -> bool:
+        """Delete dataset metadata.
+
+        Args:
+            dataset_id: Dataset identifier
+
+        Returns:
+            True if a dataset was deleted, False otherwise
+        """
+        result = self.conn.execute(
+            "DELETE FROM datasets WHERE id = ?",
+            [dataset_id]
+        )
+        return result.rowcount > 0
 
     def query(self, sql: str) -> pd.DataFrame:
         """Execute SQL query on datasets.

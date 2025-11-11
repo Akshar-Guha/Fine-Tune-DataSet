@@ -22,17 +22,40 @@ with workflow.unsafe.imports_passed_through():
 @workflow.defn(name="qlora_training")
 class QLoRATrainingWorkflow:
     """QLoRA fine-tuning workflow with DeepSpeed."""
+    
+    @staticmethod
+    def get_activities():
+        """Get activities used by this workflow."""
+        return [
+            prepare_dataset, 
+            load_base_model, 
+            apply_lora_config, 
+            train_model,
+            evaluate_model, 
+            quantize_adapter, 
+            register_artifact, 
+            cleanup_resources
+        ]
 
     @workflow.run
-    async def run(self, config: QLoRAConfig) -> Dict[str, Any]:
+    async def run(self, config: Dict[str, Any]) -> Dict[str, Any]:
         """Execute QLoRA training workflow.
         
         Args:
-            config: QLoRA training configuration
+            config: QLoRA training configuration as dictionary
             
         Returns:
             Training results with artifact IDs
         """
+        # Convert dictionary to QLoRAConfig if needed
+        if isinstance(config, dict):
+            from .config import QLoRAConfig
+            try:
+                config = QLoRAConfig(**config)
+            except Exception as e:
+                workflow.logger.error(f"Failed to parse config: {str(e)}")
+                raise ValueError(f"Invalid QLoRA config: {str(e)}")
+        
         workflow.logger.info(f"Starting QLoRA training for {config.base_model}")
 
         retry_policy = RetryPolicy(
