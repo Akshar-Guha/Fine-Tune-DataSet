@@ -15,37 +15,37 @@ Training and managing Large Language Models (LLMs) has historically been the pri
 *   ❌ **Data Chaos**: Keeping track of dataset versions, prompt templates, and cleaning rules locally often ends in a mess of "final_final_v2.csv" files.
 *   ❌ **Black Box Training**: Running scripts in a terminal gives you little insight into loss curves or potential overfitting until it's too late.
 
-## ✅ The Solution: ModelOps
+## ⚔️ Why ModelOps?
 
-We built **ModelOps** to solve this by providing a cohesive "Studio" experience for the local developer. It abstracts away the complexity of the training loop, data management, and model versioning into a single, beautiful interface.
+You might check out other tools, but here is why **ModelOps** is the only **End-to-End Studio** for local developers:
 
-### ✨ Key Features
+| Feature | **ModelOps** | LM Studio / Jan.ai | Axolotl / LLaMA Factory | Weights & Biases |
+| :--- | :---: | :---: | :---: | :---: |
+| **Local Inference UI** | ✅ | ✅ | ❌ | ❌ |
+| **GUI-Based Training** | ✅ | ❌ | ❌ | ❌ |
+| **Data Cleaning & Management** | ✅ | ❌ | ❌ | ❌ |
+| **Job Orchestration** | ✅ | ❌ | ⚠ (CLI only) | ❌ |
+| **Purpose** | **Complete Lifecycle Studio** | Chat / Inference | Hardcore Training | Monitoring |
 
-#### 1. 🧠 Local QLoRA Fine-Tuning
-Fine-tune capable models (like TinyLlama, Phi-2, or Qwen) directly on your laptop using **QLoRA (Quantized Low-Rank Adaptation)**.
-*   **4-bit Quantization**: Drastically reduces VRAM usage.
-*   **Optimized Trainer**: Pre-configured defaults for varying hardware tiers.
-*   **Real-time Monitoring**: Watch your loss curves and metrics live.
+We are not just a wrapper around a script; we are a platform that takes you from **Raw Data → Cleaned Dataset → Fine-Tuned Model → Production Deployment**.
 
-#### 2. 📂 Smart Registries
-Stop losing track of your assets.
-*   **Dataset Registry**: Search and download directly from Hugging Face, or upload local files. Includes automated **quality checks** and **auto-labeling** rules.
-*   **Model Registry**: Manage your base models and fine-tuned adapters. Track metadata, chat templates, and quantization formats (GGUF, AWQ).
+## 🖥️ Hardware Reality Check
 
-#### 3. ⚙️ Automated Data Pipelines
-Good models start with good data.
-*   **Data Cleaning**: Auto-strip whitespace, drop duplicates, and normalize labels.
-*   **Quality Gates**: Automatically flag datasets that don't meet quality thresholds (e.g., too many missing values).
+Honesty is key. Fine-tuning requires resources, but we've optimized ModelOps to squeeze every bit of performance out of consumer hardware.
 
-#### 4. 🤖 Instant Inference & Serving
-Don't just train—test.
-*   **Built-in Chat UI**: Chat with your fine-tuned model immediately after training.
-*   **Ollama Integration**: Seamlessly offload inference to Ollama for optimized performance.
-*   **Review Mode**: Compare model outputs side-by-side.
+| Tier | Hardware Example | Capabilities |
+| :--- | :--- | :--- |
+| **Minimum** | **NVIDIA RTX 3060 (8GB VRAM)** | Fine-tune **1B-3B models** (TinyLlama, StableLM) with QLoRA. |
+| **Recommended** | **NVIDIA RTX 3090 / 4090 (24GB VRAM)** | Fine-tune **7B-13B models** (Llama 3, Mistral) comfortably. |
+| **CPU Only** | Apple M-Series / High-end Intel | **Inference & Data Processing Only**. Training is not viable on CPU alone. |
 
-#### 5. 🕜 Job Orchestration
-*   **Background Jobs**: Long-running training jobs are handled asynchronously. Close your browser and come back later.
-*   **History**: A complete audit log of every training run, including hyperparameters and final metrics.
+## 🔮 The Vision & Long-Term Moat
+
+We are building more than just a tool; we are building an ecosystem for the "Local AI" era:
+
+1.  **Community Registry**: Future updates will let you share your cleaned datasets and training recipes with the community.
+2.  **One-Click GGUF Export**: Seamlessly convert your adapters to `.gguf` and push directly to Ollama.
+3.  **Active Learning**: A feedback loop where your manual chat corrections automatically become new training data.
 
 ---
 
