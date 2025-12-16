@@ -14,6 +14,7 @@ from .jobs import router as jobs_router
 from .artifacts import router as artifacts_router
 from .inference import router as inference_router
 from .models_api import router as models_api_router
+from .colab import router as colab_router
 
 
 @asynccontextmanager
@@ -75,6 +76,11 @@ app.include_router(
     models_api_router,
     prefix="/api/v1/models",
     tags=["models"]
+)
+app.include_router(
+    colab_router,
+    prefix="/api/v1/colab",
+    tags=["colab"]
 )
 
 

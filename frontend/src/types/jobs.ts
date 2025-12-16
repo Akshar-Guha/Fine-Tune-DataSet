@@ -34,8 +34,11 @@ export interface FineTuningJobCreateRequest {
   config: {
     lora_rank?: number;
     lora_alpha?: number;
+    lora_dropout?: number;
     num_epochs?: number;
     learning_rate?: number;
+    batch_size?: number;
+    max_seq_length?: number;
   };
 }
 

@@ -95,13 +95,13 @@ async def create_job(
     try:
         repo = JobRepository(db)
         job_dict = job.dict()
-        
+
         # Add creator info
         job_dict["created_by"] = current_user.get("username", "system")
-        
+
         # Submit job to temporal
         db_job = await repo.create_job(job_dict)
-        
+
         # Calculate duration if possible
         duration_seconds = None
         if db_job.completed_at and db_job.started_at:
@@ -130,6 +130,81 @@ async def create_job(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to create job: {str(e)}"
+        )
+
+
+class FineTuningJobCreate(BaseModel):
+    """Fine-tuning job creation request."""
+    name: str
+    base_model: str
+    dataset_id: str
+    config: Dict[str, Any]
+
+
+@router.post("/finetuning", response_model=JobResponse,
+             status_code=status.HTTP_201_CREATED)
+async def create_finetuning_job(
+    job: FineTuningJobCreate,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user)
+):
+    """Submit a new fine-tuning job."""
+    # Check permissions
+    if Permission.JOB_SUBMIT.value not in current_user["permissions"]:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Insufficient permissions"
+        )
+
+    try:
+        repo = JobRepository(db)
+        job_dict = {
+            "name": job.name,
+            "job_type": JobType.SFT_TRAINING.value,
+            "config": job.config,
+            "dataset_id": job.dataset_id,
+            "base_model": job.base_model,
+            "created_by": current_user.get("username", "system"),
+        }
+
+        # Create job in database
+        db_job = await repo.create_job(job_dict)
+
+        # Start the training in background
+        from ..training.finetune import run_finetuning_job
+        import asyncio
+        asyncio.create_task(run_finetuning_job(db_job.id, job_dict, db))
+
+        # Calculate duration if possible
+        duration_seconds = None
+        if db_job.completed_at and db_job.started_at:
+            duration_seconds = int(
+                (db_job.completed_at - db_job.started_at).total_seconds()
+            )
+
+        return JobResponse(
+            job_id=db_job.id,
+            name=db_job.name,
+            job_type=db_job.job_type,
+            status=db_job.status,
+            config=db_job.config,
+            dataset_id=db_job.dataset_id,
+            base_model=db_job.base_model,
+            priority=db_job.priority,
+            workflow_id=db_job.workflow_id,
+            created_at=db_job.created_at,
+            started_at=db_job.started_at,
+            completed_at=db_job.completed_at,
+            updated_at=db_job.updated_at,
+            duration_seconds=duration_seconds,
+            error=db_job.error,
+            metrics=db_job.metrics,
+            artifacts=db_job.artifacts
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to create fine-tuning job: {str(e)}"
         )
 
 

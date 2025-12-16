@@ -9,7 +9,7 @@ from artifacts.schemas.base import (
     ArtifactType,
     GovernanceStatus,
 )
-from modelops.platform.security.signing import SignatureManager
+from platform_backup.security.signing import SignatureManager
 
 logger = logging.getLogger(__name__)
 
